@@ -14,6 +14,32 @@
   "repository": "https://github.com/CodyJasonBennett/webgpu-polyfill",
   "license": "MIT",
   "files": [
-    "dist/*"
-  ]
+    "dist/*",
+    "src/*"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "types": "./dist/index.d.ts",
+  "exports": "./dist/index.js",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.30.7",
+    "@typescript-eslint/parser": "^5.30.7",
+    "eslint": "^8.20.0",
+    "np": "^7.6.2",
+    "prettier": "^2.7.1",
+    "typescript": "^4.7.4",
+    "vite": "^3.0.2",
+    "vitest": "^0.21.0"
+  },
+  "dependencies": {
+    "@webgpu/types": "^0.1.21"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "vitest run",
+    "lint": "eslint src/**/*.ts && tsc",
+    "prerelease": "npm run build && npm run test && npm run lint",
+    "release": "np"
+  }
 }
