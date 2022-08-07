@@ -1,0 +1,19 @@
+{
+  "name": "webgpu-polyfill",
+  "version": "0.0.0",
+  "description": "A WebGPU polyfill written on top of WebGL 2.",
+  "keywords": [
+    "rendering",
+    "compute",
+    "webgl",
+    "webgpu",
+    "polyfill"
+  ],
+  "author": "Cody Bennett (https://github.com/CodyJasonBennett)",
+  "homepage": "https://github.com/CodyJasonBennett/webgpu-polyfill",
+  "repository": "https://github.com/CodyJasonBennett/webgpu-polyfill",
+  "license": "MIT",
+  "files": [
+    "dist/*"
+  ]
+}
