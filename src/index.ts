@@ -2,8 +2,6 @@ import * as globals from './GPU'
 
 export const supported = 'gpu' in navigator
 
-const getContext = HTMLCanvasElement.prototype.getContext
-
 export function polyfill(force = false): void {
   if (!force && supported) return
 
@@ -12,7 +10,7 @@ export function polyfill(force = false): void {
   // @ts-ignore
   navigator.gpu = new GPU()
 
-  // @ts-ignore
+  const getContext = HTMLCanvasElement.prototype.getContext
   HTMLCanvasElement.prototype.getContext = function (
     this: HTMLCanvasElement,
     type: string,
@@ -21,7 +19,7 @@ export function polyfill(force = false): void {
     return type === 'webgpu'
       ? Object.assign(new GPUCanvasContext(), { canvas: this })
       : getContext.bind(this)(type, ...options)
-  }
+  } as typeof getContext
 }
 
 export { globals }
