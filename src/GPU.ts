@@ -44,10 +44,10 @@ export const GPUBuffer = class implements GPUBuffer {
     this.usage = descriptor.usage
   }
 
-  getMappedRange(offset?: number, size?: number): ArrayBuffer {
+  getMappedRange(offset?: GPUSize64, size?: GPUSize64): ArrayBuffer {
     return new Float32Array((size ?? this.size) / Float32Array.BYTES_PER_ELEMENT).subarray(offset).buffer
   }
-  async mapAsync(_mode: number, _offset?: number, _size?: number): Promise<undefined> {
+  async mapAsync(_mode: GPUMapModeFlags, _offset?: GPUSize64, _size?: GPUSize64): Promise<undefined> {
     return undefined
   }
   unmap(): undefined {
@@ -92,9 +92,9 @@ export const GPUTextureView = class implements GPUTextureView {
 export const GPUTexture = class implements GPUTexture {
   readonly __brand = 'GPUTexture'
   readonly label: string
-  readonly width: number
-  readonly height: number
-  readonly depthOrArrayLayers: number
+  readonly width: GPUIntegerCoordinate
+  readonly height: GPUIntegerCoordinate
+  readonly depthOrArrayLayers: GPUIntegerCoordinate
   readonly mipLevelCount: GPUIntegerCoordinate
   readonly sampleCount: GPUSize32
   readonly dimension: GPUTextureDimension
@@ -103,10 +103,10 @@ export const GPUTexture = class implements GPUTexture {
 
   constructor(descriptor: GPUTextureDescriptor) {
     this.label = descriptor.label ?? ''
-    this.width = (descriptor.size as number[])[0] ?? (descriptor.size as GPUExtent3DDict).width
-    this.height = (descriptor.size as number[])[1] ?? (descriptor.size as GPUExtent3DDict).height
+    this.width = (descriptor.size as GPUIntegerCoordinate[])[0] ?? (descriptor.size as GPUExtent3DDict).width
+    this.height = (descriptor.size as GPUIntegerCoordinate[])[1] ?? (descriptor.size as GPUExtent3DDict).height
     this.depthOrArrayLayers =
-      (descriptor.size as number[])[2] ?? (descriptor.size as GPUExtent3DDict).depthOrArrayLayers
+      (descriptor.size as GPUIntegerCoordinate[])[2] ?? (descriptor.size as GPUExtent3DDict).depthOrArrayLayers
     this.mipLevelCount = descriptor.mipLevelCount ?? 0
     this.sampleCount = descriptor.sampleCount ?? 0
     this.dimension = descriptor.dimension ?? '2d'
@@ -222,34 +222,43 @@ export const GPURenderBundleEncoder = class implements GPURenderBundleEncoder {
   insertDebugMarker(_markerLabel: string): undefined {
     return undefined
   }
-  setBindGroup(_index: number, _bindGroup: GPUBindGroup, _dynamicOffsets?: Iterable<number>): undefined {
+  setBindGroup(
+    _index: GPUIndex32,
+    _bindGroup: GPUBindGroup,
+    _dynamicOffsets?: Iterable<GPUBufferDynamicOffset>,
+  ): undefined {
     return undefined
   }
   setPipeline(_pipeline: GPURenderPipeline): undefined {
     return undefined
   }
-  setIndexBuffer(_buffer: GPUBuffer, _indexFormat: GPUIndexFormat, _offset?: number, _size?: number): undefined {
+  setIndexBuffer(_buffer: GPUBuffer, _indexFormat: GPUIndexFormat, _offset?: GPUSize64, _size?: GPUSize64): undefined {
     return undefined
   }
-  setVertexBuffer(_slot: number, _buffer: GPUBuffer, _offset?: number, _size?: number): undefined {
+  setVertexBuffer(_slot: GPUIndex32, _buffer: GPUBuffer, _offset?: GPUSize64, _size?: GPUSize64): undefined {
     return undefined
   }
-  draw(_vertexCount: number, _instanceCount?: number, _firstVertex?: number, _firstInstance?: number): undefined {
-    return undefined
-  }
-  drawIndexed(
-    _indexCount: number,
-    _instanceCount?: number,
-    _firstIndex?: number,
-    _baseVertex?: number,
-    _firstInstance?: number,
+  draw(
+    _vertexCount: GPUSize32,
+    _instanceCount?: GPUSize32,
+    _firstVertex?: GPUSize32,
+    _firstInstance?: GPUSize32,
   ): undefined {
     return undefined
   }
-  drawIndirect(_indirectBuffer: GPUBuffer, _indirectOffset: number): undefined {
+  drawIndexed(
+    _indexCount: GPUSize32,
+    _instanceCount?: GPUSize32,
+    _firstIndex?: GPUSize32,
+    _baseVertex?: GPUSignedOffset32,
+    _firstInstance?: GPUSize32,
+  ): undefined {
     return undefined
   }
-  drawIndexedIndirect(_indirectBuffer: GPUBuffer, _indirectOffset: number): undefined {
+  drawIndirect(_indirectBuffer: GPUBuffer, _indirectOffset: GPUSize64): undefined {
+    return undefined
+  }
+  drawIndexedIndirect(_indirectBuffer: GPUBuffer, _indirectOffset: GPUSize64): undefined {
     return undefined
   }
 }
@@ -272,31 +281,51 @@ export const GPURenderPassEncoder = class implements GPURenderPassEncoder {
   ): undefined {
     return undefined
   }
-  setScissorRect(_x: number, _y: number, _width: number, _height: number): undefined {
+  setScissorRect(
+    _x: GPUIntegerCoordinate,
+    _y: GPUIntegerCoordinate,
+    _width: GPUIntegerCoordinate,
+    _height: GPUIntegerCoordinate,
+  ): undefined {
     return undefined
   }
   setPipeline(_pipeline: GPURenderPipeline): undefined {
     return undefined
   }
-  setBindGroup(_index: number, _bindGroup: GPUBindGroup, _dynamicOffsets?: Iterable<number>): undefined {
-    return undefined
-  }
-  setIndexBuffer(_buffer: GPUBuffer, _indexFormat: GPUIndexFormat, _offset?: number, _size?: number): undefined {
-    return undefined
-  }
-  setVertexBuffer(_slot: number, _buffer: GPUBuffer, _offset?: number, _size?: number): undefined {
-    return undefined
-  }
-  drawIndexed(
-    _indexCount: number,
-    _instanceCount?: number,
-    _firstIndex?: number,
-    _baseVertex?: number,
-    _firstInstance?: number,
+  setBindGroup(
+    _index: GPUIndex32,
+    _bindGroup: GPUBindGroup,
+    _dynamicOffsets?: Iterable<GPUBufferDynamicOffset>,
   ): undefined {
     return undefined
   }
-  draw(_vertexCount: number, _instanceCount?: number, _firstVertex?: number, _firstInstance?: number): undefined {
+  setIndexBuffer(_buffer: GPUBuffer, _indexFormat: GPUIndexFormat, _offset?: GPUSize64, _size?: GPUSize64): undefined {
+    return undefined
+  }
+  setVertexBuffer(_slot: GPUIndex32, _buffer: GPUBuffer, _offset?: GPUSize64, _size?: GPUSize64): undefined {
+    return undefined
+  }
+  draw(
+    _vertexCount: GPUSize32,
+    _instanceCount?: GPUSize32,
+    _firstVertex?: GPUSize32,
+    _firstInstance?: GPUSize32,
+  ): undefined {
+    return undefined
+  }
+  drawIndexed(
+    _indexCount: GPUSize32,
+    _instanceCount?: GPUSize32,
+    _firstIndex?: GPUSize32,
+    _baseVertex?: GPUSignedOffset32,
+    _firstInstance?: GPUSize32,
+  ): undefined {
+    return undefined
+  }
+  drawIndirect(_indirectBuffer: GPUBuffer, _indirectOffset: GPUSize64): undefined {
+    return undefined
+  }
+  drawIndexedIndirect(_indirectBuffer: GPUBuffer, _indirectOffset: GPUSize64): undefined {
     return undefined
   }
   end(): undefined {
@@ -305,10 +334,10 @@ export const GPURenderPassEncoder = class implements GPURenderPassEncoder {
   setBlendConstant(_color: GPUColor): undefined {
     return undefined
   }
-  setStencilReference(_reference: number): undefined {
+  setStencilReference(_reference: GPUStencilValue): undefined {
     return undefined
   }
-  beginOcclusionQuery(_queryIndex: number): undefined {
+  beginOcclusionQuery(_queryIndex: GPUSize32): undefined {
     return undefined
   }
   endOcclusionQuery(): undefined {
@@ -326,12 +355,6 @@ export const GPURenderPassEncoder = class implements GPURenderPassEncoder {
   insertDebugMarker(_markerLabel: string): undefined {
     return undefined
   }
-  drawIndirect(_indirectBuffer: GPUBuffer, _indirectOffset: number): undefined {
-    return undefined
-  }
-  drawIndexedIndirect(_indirectBuffer: GPUBuffer, _indirectOffset: number): undefined {
-    return undefined
-  }
 }
 
 export const GPUComputePassEncoder = class implements GPUComputePassEncoder {
@@ -345,16 +368,20 @@ export const GPUComputePassEncoder = class implements GPUComputePassEncoder {
   setPipeline(_pipeline: GPUComputePipeline): undefined {
     return undefined
   }
-  dispatchWorkgroups(_workgroupCountX: number, _workgroupCountY?: number, _workgroupCountZ?: number): undefined {
+  dispatchWorkgroups(
+    _workgroupCountX: GPUSize32,
+    _workgroupCountY?: GPUSize32,
+    _workgroupCountZ?: GPUSize32,
+  ): undefined {
     return undefined
   }
-  dispatch(_workgroupCountX: number, _workgroupCountY?: number, _workgroupCountZ?: number): undefined {
+  dispatch(_workgroupCountX: GPUSize32, _workgroupCountY?: GPUSize32, _workgroupCountZ?: GPUSize32): undefined {
     return undefined
   }
-  dispatchWorkgroupsIndirect(_indirectBuffer: GPUBuffer, _indirectOffset: number): undefined {
+  dispatchWorkgroupsIndirect(_indirectBuffer: GPUBuffer, _indirectOffset: GPUSize64): undefined {
     return undefined
   }
-  dispatchIndirect(_indirectBuffer: GPUBuffer, _indirectOffset: number): undefined {
+  dispatchIndirect(_indirectBuffer: GPUBuffer, _indirectOffset: GPUSize64): undefined {
     return undefined
   }
   end(): undefined {
@@ -369,7 +396,11 @@ export const GPUComputePassEncoder = class implements GPUComputePassEncoder {
   popDebugGroup(): undefined {
     return undefined
   }
-  setBindGroup(_index: number, _bindGroup: GPUBindGroup, _dynamicOffsets?: Iterable<number>): undefined {
+  setBindGroup(
+    _index: GPUIndex32,
+    _bindGroup: GPUBindGroup,
+    _dynamicOffsets?: Iterable<GPUBufferDynamicOffset>,
+  ): undefined {
     return undefined
   }
 }
@@ -399,10 +430,10 @@ export const GPUCommandEncoder = class implements GPUCommandEncoder {
   }
   copyBufferToBuffer(
     _source: GPUBuffer,
-    _sourceOffset: number,
+    _sourceOffset: GPUSize64,
     _destination: GPUBuffer,
-    _destinationOffset: number,
-    _size: number,
+    _destinationOffset: GPUSize64,
+    _size: GPUSize64,
   ): undefined {
     return undefined
   }
@@ -427,18 +458,18 @@ export const GPUCommandEncoder = class implements GPUCommandEncoder {
   ): undefined {
     return undefined
   }
-  clearBuffer(_buffer: GPUBuffer, _offset?: number, _size?: number): undefined {
+  clearBuffer(_buffer: GPUBuffer, _offset?: GPUSize64, _size?: GPUSize64): undefined {
     return undefined
   }
-  writeTimestamp(_querySet: GPUQuerySet, _queryIndex: number): undefined {
+  writeTimestamp(_querySet: GPUQuerySet, _queryIndex: GPUSize32): undefined {
     return undefined
   }
   resolveQuerySet(
     _querySet: GPUQuerySet,
-    _firstQuery: number,
-    _queryCount: number,
+    _firstQuery: GPUSize32,
+    _queryCount: GPUSize32,
     _destination: GPUBuffer,
-    _destinationOffset: number,
+    _destinationOffset: GPUSize64,
   ): undefined {
     return undefined
   }
@@ -500,10 +531,10 @@ export const GPUQueue = class implements GPUQueue {
 
   writeBuffer(
     _buffer: GPUBuffer,
-    _bufferOffset: number,
+    _bufferOffset: GPUSize64,
     _data: BufferSource | SharedArrayBuffer,
-    _dataOffset?: number,
-    _size?: number,
+    _dataOffset?: GPUSize64,
+    _size?: GPUSize64,
   ): undefined {
     return undefined
   }
@@ -678,6 +709,7 @@ export const GPUAdapter = class implements GPUAdapter {
   readonly name = 'GPUAdapter'
   readonly features = new GPUSupportedFeatures()
   readonly limits = new GPUSupportedLimits()
+
   get isFallbackAdapter(): boolean {
     return false
   }
