@@ -17,8 +17,6 @@ describe('polyfill', () => {
   it('should augment canvas#getContext', () => {
     const canvas = document.createElement('canvas')
     expect(canvas.getContext('unknown')).toBe(null)
-    expect(canvas.getContext('webgpu')).toBeDefined()
-    expect(canvas.getContext('webgl2')).toBeDefined()
-    expect(canvas.getContext('webgpu')).not.toBe(canvas.getContext('webgpu'))
+    expect(canvas.getContext('webgpu')).toBeInstanceOf(GPUCanvasContext)
   })
 })
