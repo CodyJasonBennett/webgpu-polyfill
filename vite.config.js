@@ -10,6 +10,7 @@ export default defineConfig({
   },
   test: {
     dir: 'tests',
+    environment: 'jsdom',
   },
   build: {
     minify: false,
