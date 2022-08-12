@@ -1,4 +1,18 @@
 /// <reference types="@webgpu/types" />
+import {
+  RenderPipelineState,
+  Scissor,
+  Viewport,
+  _bufferData,
+  _buffers,
+  _contexts,
+  _devices,
+  _renderQueue,
+  _samplers,
+  _textureData,
+  _textureImages,
+  _textures,
+} from './shared'
 
 export const GPUTextureUsage: GPUTextureUsage = {
   __brand: 'GPUTextureUsage',
@@ -42,10 +56,13 @@ export const GPUBuffer = class implements GPUBuffer {
     this.label = descriptor.label ?? ''
     this.size = descriptor.size
     this.usage = descriptor.usage
+    _buffers.add(this)
   }
 
   getMappedRange(offset?: GPUSize64, size?: GPUSize64): ArrayBuffer {
-    return new Float32Array((size ?? this.size) / Float32Array.BYTES_PER_ELEMENT).subarray(offset).buffer
+    const data = new Float32Array((size ?? this.size) / Float32Array.BYTES_PER_ELEMENT).subarray(offset)
+    _bufferData.set(this, data)
+    return data.buffer
   }
   async mapAsync(_mode: GPUMapModeFlags, _offset?: GPUSize64, _size?: GPUSize64): Promise<undefined> {
     return undefined
@@ -54,7 +71,7 @@ export const GPUBuffer = class implements GPUBuffer {
     return undefined
   }
   destroy(): undefined {
-    return undefined
+    return void _buffers.delete(this)
   }
 }
 
@@ -64,6 +81,7 @@ export const GPUSampler = class implements GPUSampler {
 
   constructor(descriptor?: GPUSamplerDescriptor) {
     this.label = descriptor?.label ?? ''
+    _samplers.add(this)
   }
 }
 
@@ -115,7 +133,9 @@ export const GPUTexture = class implements GPUTexture {
   }
 
   createView(descriptor?: GPUTextureViewDescriptor): GPUTextureView {
-    return new GPUTextureView(descriptor)
+    const view = new GPUTextureView(descriptor)
+    _textures.set(view, this)
+    return view
   }
   destroy(): undefined {
     return undefined
@@ -266,61 +286,61 @@ export const GPURenderBundleEncoder = class implements GPURenderBundleEncoder {
 export const GPURenderPassEncoder = class implements GPURenderPassEncoder {
   readonly __brand = 'GPURenderPassEncoder'
   readonly label: string
+  private _viewport: Viewport = { x: 0, y: 0, width: 0, height: 0 }
+  private _scissor: Scissor = { x: 0, y: 0, width: 0, height: 0 }
+  private _pipeline?: GPURenderPipeline
+  private _pipelineState?: RenderPipelineState
 
   constructor(descriptor: GPURenderPassDescriptor) {
     this.label = descriptor.label ?? ''
   }
 
-  setViewport(
-    _x: number,
-    _y: number,
-    _width: number,
-    _height: number,
-    _minDepth: number,
-    _maxDepth: number,
-  ): undefined {
-    return undefined
+  setViewport(x: number, y: number, width: number, height: number, _minDepth: number, _maxDepth: number): undefined {
+    return void Object.assign(this._viewport, { x, y, width, height })
   }
   setScissorRect(
-    _x: GPUIntegerCoordinate,
-    _y: GPUIntegerCoordinate,
-    _width: GPUIntegerCoordinate,
-    _height: GPUIntegerCoordinate,
+    x: GPUIntegerCoordinate,
+    y: GPUIntegerCoordinate,
+    width: GPUIntegerCoordinate,
+    height: GPUIntegerCoordinate,
   ): undefined {
-    return undefined
+    return void Object.assign(this._scissor, { x, y, width, height })
   }
-  setPipeline(_pipeline: GPURenderPipeline): undefined {
+  setPipeline(pipeline: GPURenderPipeline): undefined {
+    this._pipeline = pipeline
+    this._pipelineState = { buffers: new Map(), bindGroups: new Map(), vertexCount: 0, indexCount: 0 }
+
     return undefined
   }
   setBindGroup(
-    _index: GPUIndex32,
-    _bindGroup: GPUBindGroup,
+    index: GPUIndex32,
+    bindGroup: GPUBindGroup,
     _dynamicOffsets?: Iterable<GPUBufferDynamicOffset>,
   ): undefined {
-    return undefined
+    return void this._pipelineState!.bindGroups.set(index, bindGroup)
   }
-  setIndexBuffer(_buffer: GPUBuffer, _indexFormat: GPUIndexFormat, _offset?: GPUSize64, _size?: GPUSize64): undefined {
-    return undefined
+  setIndexBuffer(buffer: GPUBuffer, _indexFormat: GPUIndexFormat, _offset?: GPUSize64, _size?: GPUSize64): undefined {
+    return void this._pipelineState!.buffers.set(-1, buffer)
   }
-  setVertexBuffer(_slot: GPUIndex32, _buffer: GPUBuffer, _offset?: GPUSize64, _size?: GPUSize64): undefined {
-    return undefined
+  setVertexBuffer(slot: GPUIndex32, buffer: GPUBuffer, _offset?: GPUSize64, _size?: GPUSize64): undefined {
+    return void this._pipelineState!.buffers.set(slot, buffer)
   }
   draw(
-    _vertexCount: GPUSize32,
+    vertexCount: GPUSize32,
     _instanceCount?: GPUSize32,
     _firstVertex?: GPUSize32,
     _firstInstance?: GPUSize32,
   ): undefined {
-    return undefined
+    return void (this._pipelineState!.vertexCount = vertexCount)
   }
   drawIndexed(
-    _indexCount: GPUSize32,
+    indexCount: GPUSize32,
     _instanceCount?: GPUSize32,
     _firstIndex?: GPUSize32,
     _baseVertex?: GPUSignedOffset32,
     _firstInstance?: GPUSize32,
   ): undefined {
-    return undefined
+    return void (this._pipelineState!.indexCount = indexCount)
   }
   drawIndirect(_indirectBuffer: GPUBuffer, _indirectOffset: GPUSize64): undefined {
     return undefined
@@ -329,7 +349,7 @@ export const GPURenderPassEncoder = class implements GPURenderPassEncoder {
     return undefined
   }
   end(): undefined {
-    return undefined
+    return void _renderQueue.set(this._pipeline!, this._pipelineState!)
   }
   setBlendConstant(_color: GPUColor): undefined {
     return undefined
@@ -513,12 +533,17 @@ export const GPUCanvasContext = class implements GPUCanvasContext {
       this._texture?.format !== this._format ||
       this._texture?.usage !== this._usage
     ) {
-      this._texture?.destroy()
+      if (this._texture) {
+        _contexts.delete(this._texture)
+        this._texture.destroy()
+      }
+
       this._texture = new GPUTexture({
         size: [this.canvas.width, this.canvas.height, 1],
         format: this._format,
         usage: this._usage,
       })
+      _contexts.set(this._texture, this)
     }
 
     return this._texture
@@ -530,13 +555,13 @@ export const GPUQueue = class implements GPUQueue {
   readonly label = ''
 
   writeBuffer(
-    _buffer: GPUBuffer,
+    buffer: GPUBuffer,
     _bufferOffset: GPUSize64,
-    _data: BufferSource | SharedArrayBuffer,
+    data: BufferSource | SharedArrayBuffer,
     _dataOffset?: GPUSize64,
     _size?: GPUSize64,
   ): undefined {
-    return undefined
+    return void _bufferData.set(buffer, data)
   }
   submit(_commandBuffers: Iterable<GPUCommandBuffer>): undefined {
     return undefined
@@ -545,19 +570,19 @@ export const GPUQueue = class implements GPUQueue {
     return undefined
   }
   writeTexture(
-    _estination: GPUImageCopyTexture,
-    _data: BufferSource | SharedArrayBuffer,
+    destination: GPUImageCopyTexture,
+    data: BufferSource | SharedArrayBuffer,
     _dataLayout: GPUImageDataLayout,
     _size: GPUExtent3DStrict,
   ): undefined {
-    return undefined
+    return void _textureData.set(destination.texture, data)
   }
   copyExternalImageToTexture(
-    _source: GPUImageCopyExternalImage,
-    _destination: GPUImageCopyTextureTagged,
+    source: GPUImageCopyExternalImage,
+    destination: GPUImageCopyTextureTagged,
     _copySize: GPUExtent3DStrict,
   ): undefined {
-    return undefined
+    return void _textureImages.set(destination.texture, source.source)
   }
 }
 
@@ -633,6 +658,7 @@ export const GPUDevice = class extends EventTarget implements GPUDevice {
   constructor(descriptor?: GPUDeviceDescriptor) {
     super()
     this.label = descriptor?.label ?? ''
+    _devices.add(this)
   }
 
   createSampler(descriptor?: GPUSamplerDescriptor): GPUSampler {
@@ -687,7 +713,7 @@ export const GPUDevice = class extends EventTarget implements GPUDevice {
     return new GPUTexture(descriptor)
   }
   destroy(): undefined {
-    return undefined
+    return void _devices.delete(this)
   }
   onuncapturederror(): undefined {
     return undefined
